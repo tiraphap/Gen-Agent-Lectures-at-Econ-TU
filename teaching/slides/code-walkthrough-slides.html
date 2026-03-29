@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Walkthrough: Full Simulation — ผศ.ดร.ถิรภาพ คณะเศรษฐศาสตร์ มธ.</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/monokai.css">
+
+<style>
+:root {
+  --s1-color: #1a1a2e;
+  --s2-color: #16213e;
+  --s3-color: #0f3460;
+  --s4-color: #1b1b3a;
+  --s5-color: #1a3c40;
+  --s6-color: #2d132c;
+  --s7-color: #0a1628;
+  --s8-color: #1c1c3c;
+  --accent: #e94560;
+  --accent2: #53d8fb;
+  --accent3: #ffd369;
+  --accent4: #a8e6cf;
+}
+
+.reveal {
+  font-family: 'Sarabun', sans-serif;
+  font-size: 32px;
+}
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 700;
+  text-transform: none;
+}
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.6em; }
+.reveal h3 { font-size: 1.3em; }
+
+.reveal code, .reveal pre code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65em;
+}
+.reveal pre {
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  border-radius: 8px;
+  max-height: 420px;
+}
+
+/* Section backgrounds */
+.s1 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+.s2 { background: linear-gradient(135deg, #16213e 0%, #0f3460 100%); }
+.s3 { background: linear-gradient(135deg, #0f3460 0%, #1b4f72 100%); }
+.s4 { background: linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%); }
+.s5 { background: linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%); }
+.s6 { background: linear-gradient(135deg, #2d132c 0%, #5c2d5e 100%); }
+.s7 { background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%); }
+.s8 { background: linear-gradient(135deg, #1c1c3c 0%, #2a1a4a 100%); }
+
+/* Accent colors */
+.accent { color: var(--accent); }
+.accent2 { color: var(--accent2); }
+.accent3 { color: var(--accent3); }
+.accent4 { color: var(--accent4); }
+
+/* Architecture diagram boxes */
+.arch-box {
+  display: inline-block;
+  padding: 12px 24px;
+  border: 2px solid var(--accent2);
+  border-radius: 8px;
+  margin: 6px;
+  font-weight: 600;
+  font-size: 0.85em;
+  background: rgba(83,216,251,0.1);
+  min-width: 100px;
+  text-align: center;
+}
+.arch-box.active {
+  border-color: var(--accent);
+  background: rgba(233,69,96,0.15);
+  color: var(--accent);
+}
+.arch-box.memory {
+  border-color: var(--accent3);
+  background: rgba(255,211,105,0.1);
+  color: var(--accent3);
+  min-width: 300px;
+}
+.arch-arrow {
+  display: inline-block;
+  color: var(--accent2);
+  font-size: 1.5em;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.arch-arrow-down {
+  display: block;
+  color: var(--accent3);
+  font-size: 1.5em;
+  text-align: center;
+  margin: 4px 0;
+}
+
+/* Comparison table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8em;
+}
+.compare-table th {
+  background: rgba(233,69,96,0.3);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 2px solid var(--accent);
+}
+.compare-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  vertical-align: top;
+}
+.compare-table tr:hover td {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Fragment highlight */
+.highlight-box {
+  background: rgba(233,69,96,0.15);
+  border-left: 4px solid var(--accent);
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  text-align: left;
+  font-size: 0.85em;
+}
+
+/* Memory type badges */
+.badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.7em;
+  font-weight: 600;
+  margin: 2px;
+}
+.badge-obs { background: rgba(83,216,251,0.2); color: var(--accent2); border: 1px solid var(--accent2); }
+.badge-ref { background: rgba(233,69,96,0.2); color: var(--accent); border: 1px solid var(--accent); }
+.badge-plan { background: rgba(168,230,207,0.2); color: var(--accent4); border: 1px solid var(--accent4); }
+
+/* Flow diagram */
+.flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+/* Small text */
+.small { font-size: 0.7em; color: #aaa; }
+.medium { font-size: 0.85em; }
+
+/* Two column */
+.two-col {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+.two-col > div { flex: 1; }
+
+/* Section title slide */
+.section-title h2 {
+  font-size: 2em;
+  margin-bottom: 0.3em;
+}
+.section-title .section-num {
+  font-size: 3em;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.3;
+  position: absolute;
+  top: 20px;
+  right: 40px;
+}
+
+/* Lists */
+.reveal ul { list-style: none; padding-left: 0; }
+.reveal ul li { padding: 4px 0; }
+.reveal ul li::before {
+  content: "\25B8";
+  color: var(--accent2);
+  margin-right: 10px;
+}
+
+/* Keynote style */
+.title-slide h1 {
+  font-size: 2.5em;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* Instructor footer */
+.instructor-footer {
+  position: fixed;
+  bottom: 18px;
+  right: 28px;
+  font-size: 20px;
+  color: rgba(255,255,255,0.65);
+  z-index: 100;
+  font-family: 'Sarabun', sans-serif;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+/* Fit content to slide — no scrollbar */
+.compare-table { font-size: 0.7em; }
+
+/* Code walkthrough specific */
+.code-note {
+  background: rgba(255,211,105,0.1);
+  border-left: 4px solid var(--accent3);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 10px 0;
+  text-align: left;
+  font-size: 0.78em;
+}
+.step-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.75em;
+  font-weight: 700;
+  margin: 4px;
+}
+.step-perceive { background: rgba(83,216,251,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
+.step-retrieve { background: rgba(168,230,207,0.2); color: var(--accent4); border: 2px solid var(--accent4); }
+.step-plan { background: rgba(233,69,96,0.2); color: var(--accent); border: 2px solid var(--accent); }
+.step-execute { background: rgba(255,211,105,0.2); color: var(--accent3); border: 2px solid var(--accent3); }
+.step-reflect { background: rgba(160,120,255,0.2); color: #c49bff; border: 2px solid #c49bff; }
+
+.profile-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  font-size: 0.7em;
+}
+</style>
+</head>
+<body>
+
+<div class="instructor-footer">
+  ผศ.ดร.ถิรภาพ ฟักทอง | คณะเศรษฐศาสตร์ มหาวิทยาลัยธรรมศาสตร์
+</div>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- TITLE SLIDE -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0f3460 100%)">
+  <div class="title-slide">
+    <h1>Code Walkthrough</h1>
+    <h3 style="color:#aaa; font-weight:300;">Full Simulation with Claude API</h3>
+    <p style="margin-top:30px; font-size:0.75em; color:#ccc;">
+      อธิบายโค้ดทีละบรรทัด จาก Notebook <span class="accent2">full_simulation_claude.ipynb</span>
+    </p>
+    <p style="margin-top:10px; font-size:0.65em; color:#888;">
+      Memory Stream &rarr; Cognitive Loop &rarr; Multi-Agent Simulation
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: Overview -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)">
+  <div class="section-title">
+    <span class="section-num">01</span>
+    <h2>Overview</h2>
+    <p style="color:#aaa;">Notebook นี้ทำอะไร?</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)">
+  <h3>Notebook นี้ทำอะไร?</h3>
+  <div class="highlight-box">
+    รวมเนื้อหาจาก <strong class="accent2">Notebook 01-03</strong> เข้าด้วยกัน<br>
+    พร้อมใช้ <strong class="accent">Claude API</strong> เป็น LLM จริง (ไม่ใช่ mock)
+  </div>
+  <div style="font-size:0.82em; margin-top:20px;">
+    <div class="fragment">
+      <p><span class="accent2">Part 1:</span> <strong>Memory Stream</strong> &mdash; ระบบความทรงจำ + สูตร Retrieval</p>
+    </div>
+    <div class="fragment">
+      <p><span class="accent3">Part 2:</span> <strong>Cognitive Loop</strong> &mdash; วงจรการคิด 5 ขั้นตอน (PERCEIVE &rarr; REFLECT)</p>
+    </div>
+    <div class="fragment">
+      <p><span class="accent">Part 3:</span> <strong>Multi-Agent Simulation</strong> &mdash; จำลองลูกค้า 3 คน ที่มีนิสัยต่างกัน</p>
+    </div>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)">
+  <h3>Architecture: ภาพรวมทั้ง Notebook</h3>
+  <div style="margin-top:20px;">
+    <div class="flow-row">
+      <div class="arch-box" style="border-color:var(--accent3);color:var(--accent3);">Setup<br><span style="font-size:0.7em;">Claude API + Config</span></div>
+      <span class="arch-arrow">&rarr;</span>
+      <div class="arch-box" style="border-color:var(--accent2);color:var(--accent2);">Memory Stream<br><span style="font-size:0.7em;">Memory + MemoryStream</span></div>
+      <span class="arch-arrow">&rarr;</span>
+      <div class="arch-box active">Cognitive Loop<br><span style="font-size:0.7em;">5 Steps</span></div>
+      <span class="arch-arrow">&rarr;</span>
+      <div class="arch-box" style="border-color:var(--accent4);color:var(--accent4);">Multi-Agent<br><span style="font-size:0.7em;">3 Customers</span></div>
+    </div>
+    <div class="arch-arrow-down">&darr;</div>
+    <div class="arch-box memory">Memory Stream &mdash; ศูนย์กลางของทุกอย่าง</div>
+  </div>
+  <div class="fragment" style="margin-top:25px;">
+    <div class="code-note">
+      <strong class="accent3">Key Insight:</strong> Claude ทำหน้าที่ "สมอง" ใน 2 ขั้นตอน &mdash;
+      <strong class="accent">PLAN</strong> (ตัดสินใจ) และ <strong style="color:#c49bff;">REFLECT</strong> (สรุปบทเรียน)<br>
+      ที่เหลือเป็นโค้ด Python ธรรมดา ไม่ต้องใช้ LLM
+    </div>
+  </div>
+</section>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: Claude API Setup -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #16213e 0%, #0f3460 100%)">
+  <div class="section-title">
+    <span class="section-num">02</span>
+    <h2>Claude API Setup</h2>
+    <p style="color:#aaa;">ติดตั้งและเชื่อมต่อกับ Claude</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #16213e 0%, #0f3460 100%)">
+  <h3>ติดตั้ง + สร้าง Client</h3>
+  <div style="font-size:0.8em; margin-bottom:15px;">
+    <p>ขั้นตอนแรก: ติดตั้ง library และสร้าง client เชื่อมต่อ API</p>
+  </div>
+  <pre><code class="python" style="font-size:0.55em;">
+# ติดตั้ง dependencies (สำหรับ Google Colab)
+!pip install anthropic python-dotenv matplotlib
+
+# CONFIG: Claude API
+ANTHROPIC_API_KEY = ""   # ใส่ API key ที่นี่
+MODEL = "claude-sonnet-4-6"  # หรือ claude-haiku-4-5-20251001 (ถูกกว่า)
+
+import anthropic
+import json
+import re
+
+client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent3">สิ่งที่ต้องรู้:</strong><br>
+    &bull; <code>anthropic</code> คือ official Python SDK ของ Anthropic<br>
+    &bull; <code>ANTHROPIC_API_KEY</code> ได้จาก <span class="accent2">console.anthropic.com</span><br>
+    &bull; <code>claude-sonnet-4-6</code> = รุ่นฉลาด, <code>claude-haiku-4-5-20251001</code> = รุ่นเร็ว+ถูก
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #16213e 0%, #0f3460 100%)">
+  <h3>ฟังก์ชัน <code class="accent">call_llm()</code> &mdash; หัวใจของ Notebook</h3>
+  <pre><code class="python" style="font-size:0.5em;">
+def call_llm(prompt, system_message="คุณกำลังเล่นเป็นตัวละคร ..."):
+    """เรียก Claude API แล้วดึง JSON จาก response"""
+    response = client.messages.create(
+        model=MODEL,
+        max_tokens=2048,
+        system=system_message,        # บอก Claude ว่า "ทำตัวยังไง"
+        messages=[{"role": "user", "content": prompt}]  # prompt จริง
+    )
+    text = response.content[0].text   # ดึงข้อความจาก response
+  </code></pre>
+  <div class="fragment" style="margin-top:15px;">
+    <div class="code-note">
+      <strong class="accent3">Parameter ที่สำคัญ:</strong><br>
+      &bull; <code>system</code> = กำหนด "บทบาท" ของ Claude (เช่น ให้เล่นเป็นตัวละคร)<br>
+      &bull; <code>messages</code> = prompt ที่ส่งไป (เป็น list ของ dict)<br>
+      &bull; <code>max_tokens=2048</code> = จำกัดความยาว response<br>
+      &bull; <code>response.content[0].text</code> = ข้อความที่ Claude ตอบกลับมา
+    </div>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #16213e 0%, #0f3460 100%)">
+  <h3>JSON Parsing &mdash; 3 Fallbacks</h3>
+  <p style="font-size:0.7em; color:#aaa;">Claude อาจตอบ JSON ในหลายรูปแบบ &mdash; เราต้องรองรับทั้งหมด</p>
+  <pre><code class="python" style="font-size:0.45em;">
+# Fallback 1: ลอง parse ตรงๆ
+try: return json.loads(text)
+except json.JSONDecodeError: pass
+
+# Fallback 2: หา JSON ใน code fence ```json ... ```
+code_match = re.search(r'```(?:json)?\s*\n?([\s\S]*?)\n?```', text)
+if code_match:
+    try: return json.loads(code_match.group(1))
+    except: pass
+
+# Fallback 3: หาจาก { แรก ถึง } สุดท้าย
+first, last = text.find('{'), text.rfind('}')
+if first != -1 and last > first:
+    try: return json.loads(text[first:last + 1])
+    except: pass
+  </code></pre>
+  <table class="compare-table" style="font-size:0.65em; margin-top:12px;">
+    <thead><tr><th>Fallback</th><th>จับ pattern</th><th>ตัวอย่าง</th></tr></thead>
+    <tbody>
+      <tr><td class="accent2">1. ตรงๆ</td><td><code>json.loads(text)</code></td><td><code>{"action": "go"}</code></td></tr>
+      <tr><td class="accent3">2. Code fence</td><td>regex หา <code>```json```</code></td><td><code>```json {...} ```</code></td></tr>
+      <tr><td class="accent">3. Braces</td><td><code>{ แรก ... } สุดท้าย</code></td><td><code>Sure! {"action":"go"}</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: Memory & MemoryStream -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1b4f72 100%)">
+  <div class="section-title">
+    <span class="section-num">03</span>
+    <h2>Memory &amp; MemoryStream</h2>
+    <p style="color:#aaa;">ระบบความทรงจำของ Agent</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1b4f72 100%)">
+  <h3>Memory dataclass &mdash; ความทรงจำ 1 อัน</h3>
+  <pre><code class="python" style="font-size:0.52em;">
+@dataclass
+class Memory:
+    """ความทรงจำหนึ่งอันของ Generative Agent"""
+    content: str                        # เนื้อหา เช่น "ไป Lotus's พนักงานดีมาก"
+    created_at: datetime                # เวลาที่เกิดเหตุการณ์
+    importance: int                     # 1-10 (LLM ให้คะแนน)
+    memory_type: str = "observation"    # observation / reflection / plan
+    related_store: Optional[str] = None # ร้านที่เกี่ยวข้อง (ถ้ามี)
+    access_count: int = 0              # เรียกดูไปกี่ครั้ง
+  </code></pre>
+  <div class="fragment" style="margin-top:15px;">
+    <div class="two-col" style="font-size:0.75em;">
+      <div>
+        <h4 class="accent2" style="font-size:0.95em;">3 ประเภทความทรงจำ</h4>
+        <p><span class="badge badge-obs">observation</span> สิ่งที่เห็น/ทำจริง</p>
+        <p><span class="badge badge-ref">reflection</span> บทเรียนที่สรุปได้</p>
+        <p><span class="badge badge-plan">plan</span> แผนที่วางไว้</p>
+      </div>
+      <div>
+        <h4 class="accent3" style="font-size:0.95em;">ตัวอย่าง</h4>
+        <p style="font-size:0.85em;"><span class="badge badge-obs">obs</span> "ไป Big C คนเยอะมาก"</p>
+        <p style="font-size:0.85em;"><span class="badge badge-ref">ref</span> "Big C คุ้มแต่เสียเวลา"</p>
+        <p style="font-size:0.85em;"><span class="badge badge-plan">plan</span> "ต้องซื้อนมเพิ่ม"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1b4f72 100%)">
+  <h3>MemoryStream class &mdash; <code>__init__</code> + <code>add()</code></h3>
+  <pre><code class="python" style="font-size:0.5em;">
+class MemoryStream:
+    """ระบบความทรงจำ — ค้นหาด้วย score = recency x importance x relevance"""
+
+    RECENCY_DECAY = 0.99      # ค่าคงที่: ทุก 1 ชม. ความทรงจำจางลง 1%
+
+    def __init__(self, agent_name: str):
+        self.agent_name = agent_name
+        self.memories: list[Memory] = []    # เก็บ Memory ทั้งหมดเป็น list
+
+    def add(self, content, importance, memory_type="observation",
+            created_at=None, related_store=None):
+        mem = Memory(
+            content=content,
+            created_at=created_at or datetime.now(),
+            importance=importance,
+            memory_type=memory_type,
+            related_store=related_store
+        )
+        self.memories.append(mem)
+        return mem
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent3">โครงสร้างง่ายมาก:</strong><br>
+    &bull; <code>__init__</code>: สร้าง list ว่าง เก็บชื่อ agent<br>
+    &bull; <code>add()</code>: สร้าง Memory object แล้ว append เข้า list<br>
+    &bull; <code>RECENCY_DECAY = 0.99</code>: ค่า decay ต่อชั่วโมง (จาก Stanford paper)
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1b4f72 100%)">
+  <h3>MemoryStream &mdash; <code class="accent">retrieve()</code> หัวใจของระบบ</h3>
+  <pre><code class="python" style="font-size:0.48em;">
+def retrieve(self, query, top_k=5, current_time=None):
+    if current_time is None:
+        current_time = datetime.now()
+    results = []
+    for mem in self.memories:
+        # 1. Recency: ยิ่งเก่า ยิ่งคะแนนต่ำ
+        hours = (current_time - mem.created_at).total_seconds() / 3600
+        recency = self.RECENCY_DECAY ** hours        # 0.99^hours
+
+        # 2. Importance: LLM ให้คะแนน 1-10 → normalize เป็น 0-1
+        importance = mem.importance / 10.0
+
+        # 3. Relevance: substring matching (รองรับภาษาไทย)
+        query_keywords = set(query.lower().split())
+        content_lower = mem.content.lower()
+        matching = sum(1 for word in query_keywords if word in content_lower)
+        relevance = min(1.0, matching / len(query_keywords)) if query_keywords else 0
+
+        # คูณ 3 ตัวเข้าด้วยกัน
+        total = recency * importance * relevance
+        results.append((mem, {"recency": recency, "importance": importance,
+                               "relevance": relevance, "total": total}))
+    results.sort(key=lambda x: x[1]["total"], reverse=True)
+    return results[:top_k]
+  </code></pre>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #0f3460 0%, #1b4f72 100%)">
+  <h3>สูตร Retrieval: <code class="accent3">score = recency x importance x relevance</code></h3>
+  <table class="compare-table" style="margin-top:15px;">
+    <thead>
+      <tr><th style="width:25%;">ส่วนประกอบ</th><th style="width:30%;">สูตร</th><th>ความหมาย</th></tr>
+    </thead>
+    <tbody>
+      <tr class="fragment">
+        <td class="accent2">Recency</td>
+        <td><code>0.99 ^ hours</code></td>
+        <td>ยิ่งเก่ายิ่งจาง &mdash; 24 ชม. = 0.79, 1 สัปดาห์ = 0.18</td>
+      </tr>
+      <tr class="fragment">
+        <td class="accent3">Importance</td>
+        <td><code>importance / 10</code></td>
+        <td>LLM ให้คะแนน 1-10 &mdash; เหตุการณ์สำคัญจำได้นานกว่า</td>
+      </tr>
+      <tr class="fragment">
+        <td class="accent">Relevance</td>
+        <td><code>matching / total keywords</code></td>
+        <td>ตรงกับ query มากแค่ไหน &mdash; ใช้ substring matching</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="fragment" style="margin-top:20px;">
+    <div class="code-note">
+      <strong class="accent3">ทำไมใช้ substring matching?</strong><br>
+      ภาษาไทยตัดคำยาก (ไม่มี space ระหว่างคำ)<br>
+      ใช้ <code>word in content_lower</code> แทน exact match &mdash; เช่น query "นม" จะเจอ "ซื้อนมที่ Big C"<br>
+      Paper ต้นฉบับใช้ <strong>vector embeddings</strong> ซึ่งแม่นกว่าแต่ซับซ้อนกว่ามาก
+    </div>
+  </div>
+</section>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: Cognitive Loop - 5 Steps -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <div class="section-title">
+    <span class="section-num">04</span>
+    <h2>Cognitive Loop &mdash; 5 ขั้นตอน</h2>
+    <p style="color:#aaa;">วงจรการคิดของ Generative Agent</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3>ภาพรวม: 5 Steps</h3>
+  <div class="flow-row" style="margin-top:30px;">
+    <span class="step-badge step-perceive">1. PERCEIVE</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="step-badge step-retrieve">2. RETRIEVE</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="step-badge step-plan">3. PLAN</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="step-badge step-execute">4. EXECUTE</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="step-badge step-reflect">5. REFLECT</span>
+  </div>
+  <div style="margin-top:20px; font-size:0.8em;">
+    <div class="arch-arrow-down">&darr;</div>
+    <div class="arch-box memory">Memory Stream &mdash; REFLECT สร้าง memory ใหม่ใส่กลับ</div>
+  </div>
+  <div class="fragment" style="margin-top:20px;">
+    <table class="compare-table" style="font-size:0.7em;">
+      <thead><tr><th>Step</th><th>ใช้ LLM?</th><th>หน้าที่</th></tr></thead>
+      <tbody>
+        <tr><td class="accent2">PERCEIVE</td><td>ไม่ใช้</td><td>สังเกตสิ่งรอบตัว (สร้าง context)</td></tr>
+        <tr><td class="accent4">RETRIEVE</td><td>ไม่ใช้</td><td>ดึงความทรงจำที่เกี่ยวข้อง</td></tr>
+        <tr><td class="accent">PLAN</td><td><strong class="accent">ใช้ Claude</strong></td><td>ตัดสินใจ (สมองของ agent)</td></tr>
+        <tr><td class="accent3">EXECUTE</td><td>ไม่ใช้</td><td>ลงมือทำตามแผน</td></tr>
+        <tr><td style="color:#c49bff;">REFLECT</td><td><strong class="accent">ใช้ Claude</strong></td><td>สรุปบทเรียน สร้าง memory ใหม่</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- STEP 1: PERCEIVE -->
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-perceive">STEP 1</span> PERCEIVE &mdash; สังเกตสิ่งรอบตัว</h3>
+  <pre><code class="python" style="font-size:0.48em;">
+perception = {
+    "day": day_names[NOW.weekday()],            # "เสาร์"
+    "time": NOW.strftime("%H:%M"),              # "10:00"
+    "shopping_list": [
+        {"item": "นม", "urgency": "high", "reason": "เหลือ 1 กล่อง"},
+        {"item": "ไข่", "urgency": "high", "reason": "หมดแล้ว"},
+        {"item": "ผงซักฟอก", "urgency": "medium", "reason": "เหลือน้อย"},
+        {"item": "มะละกอ", "urgency": "low", "reason": "สามีอยากกินส้มตำ"},
+    ],
+    "budget": 3000,
+    "mood": "สบายๆ ไม่รีบ",
+    "available_stores": STORES,
+    "query": "ซื้อของ ร้าน นม ไข่ โปรโมชั่น ลดราคา"     # keywords สำหรับ retrieve
+}
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent2">PERCEIVE ไม่ใช้ LLM</strong> &mdash; เป็นแค่การรวบรวมข้อมูลสิ่งรอบตัว<br>
+    &bull; <code>shopping_list</code> = ของที่ต้องซื้อ พร้อมระดับความเร่งด่วน<br>
+    &bull; <code>query</code> = keywords ที่จะใช้ค้น Memory Stream ในขั้นถัดไป<br>
+    &bull; <code>STORES</code> = ร้านค้าที่เลือกได้ พร้อมโปรโมชั่นและระยะทาง
+  </div>
+</section>
+
+<!-- STEP 2: RETRIEVE -->
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-retrieve">STEP 2</span> RETRIEVE &mdash; ดึงความทรงจำ</h3>
+  <pre><code class="python" style="font-size:0.5em;">
+# STEP 2: RETRIEVE — ดึงความทรงจำ (ไม่ใช้ LLM)
+memory_stream = somsri    # ใช้ MemoryStream ที่สร้างไว้แล้ว
+query = perception['query']
+retrieved = memory_stream.retrieve(query, top_k=5, current_time=NOW)
+
+# แสดงผล
+for i, (mem, scores) in enumerate(retrieved, 1):
+    print(f"  #{i} [score={scores['total']:.4f}] {mem.content}")
+
+# แปลงเป็น text สำหรับใส่ใน prompt
+memories_text = memory_stream.format_for_prompt(retrieved)
+  </code></pre>
+  <div class="fragment">
+    <pre><code class="python" style="font-size:0.5em;">
+def format_for_prompt(self, results):
+    """แปลง memories เป็น text สำหรับใส่ใน LLM prompt"""
+    if not results:
+        return "ไม่มีความทรงจำที่เกี่ยวข้อง"
+    return "\n".join(f"- {mem.content}" for mem, _ in results)
+    </code></pre>
+  </div>
+  <div class="fragment code-note">
+    <strong class="accent4">RETRIEVE ก็ไม่ใช้ LLM</strong> &mdash; ใช้สูตร recency x importance x relevance<br>
+    ดึง top 5 memories ที่เกี่ยวข้องที่สุด แล้วแปลงเป็น text ใส่ prompt
+  </div>
+</section>
+
+<!-- STEP 3: PLAN -->
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-plan">STEP 3</span> PLAN &mdash; Claude ตัดสินใจ!</h3>
+  <p style="font-size:0.75em; color:#aaa;">ขั้นตอนนี้ใช้ Claude &mdash; ส่ง prompt ยาวที่รวมทุกอย่างเข้าด้วยกัน</p>
+  <pre><code class="python" style="font-size:0.45em;">
+def build_prompt(agent, perception, memories_text):
+    p = agent['personality']
+    fin = agent['financial']
+    return f"""คุณกำลังเล่นเป็นตัวละครชื่อ \"{agent['name']}\"
+
+[ตัวตนของฉัน]
+- อายุ {agent['age']} ปี อาชีพ {agent['job']}
+- รายได้ {fin['monthly_income']:,} บาท/เดือน
+- {agent['background']}
+
+[นิสัยของฉัน (personality traits)]
+- ความไวต่อราคา: {p['price_sensitivity']*10:.0f}/10
+- ชอบโปรโมชั่น: {p['promotion_attraction']*10:.0f}/10
+- ต้องการความสะดวก: {p['convenience_preference']*10:.0f}/10
+- ซื้อของตามใจ: {p['impulse_buying']*10:.0f}/10
+... (+ innate_traits, routines, pain_points)
+
+[ความทรงจำที่เกี่ยวข้อง]         ← จาก RETRIEVE
+{memories_text}
+
+[สถานการณ์ + ของที่ต้องซื้อ + ร้านค้า]  ← จาก PERCEIVE
+...
+
+ตอบในรูปแบบ JSON: {{ "thinking_steps": [...], "decision": {{...}} }}"""
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent">Prompt ประกอบด้วย 4 ส่วน:</strong>
+    ตัวตน + นิสัย + ความทรงจำ + สถานการณ์<br>
+    Claude ตัดสินใจ "ตามนิสัย" ของตัวละคร ไม่ใช่ตาม if-else
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-plan">STEP 3</span> PLAN &mdash; JSON Output</h3>
+  <p style="font-size:0.75em; color:#aaa;">Claude ตอบกลับเป็น JSON ที่มี thinking_steps + decision</p>
+  <pre><code class="python" style="font-size:0.5em;">
+# เรียก Claude
+prompt = build_prompt(AGENT, perception, memories_text)
+plan = call_llm(prompt)
+
+# ผลลัพธ์ที่ Claude ตอบกลับ:
+{
+    "thinking_steps": [
+        "ฉันต้องซื้อนมและไข่ ทั้งสองอย่างเร่งด่วน",
+        "Big C มีโปรลดนม 30% น่าสนใจ แต่ไกลหน่อย",
+        "วันนี้เสาร์ ไม่รีบ ไปไกลได้ ..."
+    ],
+    "decision": {
+        "action": "go_shopping",
+        "store": "Big C",
+        "items_to_buy": ["นม Dutch Mill 3 กล่อง", "ไข่ 1 แผง", ...],
+        "estimated_spend": 850,
+        "reasoning": "เลือก Big C เพราะโปรนม 30% ..."
+    }
+}
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent3">Key:</strong> <code>thinking_steps</code> ทำให้เรา "เห็น" กระบวนการคิดของ Claude<br>
+    เหมือน Chain-of-Thought &mdash; คิดทีละขั้น แล้วสรุปเป็น decision
+  </div>
+</section>
+
+<!-- STEP 4: EXECUTE -->
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-execute">STEP 4</span> EXECUTE &mdash; ลงมือทำ</h3>
+  <pre><code class="python" style="font-size:0.52em;">
+# STEP 4: EXECUTE — ลงมือทำ (ไม่ใช้ LLM)
+
+d = plan['decision']
+store_name = d.get('store', 'Unknown')
+items = d.get('items_to_buy', [])
+spend = d.get('estimated_spend', 0)
+
+print(f"  สมศรี กำลังเดินทางไป {store_name}...")
+print(f"  ถึงร้านแล้ว! กำลังซื้อของ:")
+for item in items:
+    print(f"    ✓ {item}")
+print(f"  จ่ายเงิน: {spend:,} บาท")
+print(f"  งบเหลือ: {perception['budget'] - spend:,} บาท")
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent3">EXECUTE ง่ายมาก</strong> &mdash; ไม่ใช้ LLM<br>
+    แค่นำ <code>plan['decision']</code> ที่ Claude ตอบมา แล้ว "จำลอง" การทำตาม<br>
+    ในระบบจริง ขั้นนี้อาจเป็นการอัปเดต state, ลบ stock, คำนวณเงิน ฯลฯ
+  </div>
+</section>
+
+<!-- STEP 5: REFLECT -->
+<section data-background-gradient="linear-gradient(135deg, #1b1b3a 0%, #2d1b69 100%)">
+  <h3><span class="step-badge step-reflect">STEP 5</span> REFLECT &mdash; สรุปบทเรียน</h3>
+  <pre><code class="python" style="font-size:0.48em;">
+reflect_prompt = f"""คุณคือ \"{AGENT['name']}\" เพิ่งไปซื้อของ
+
+สิ่งที่ทำ: {d['reasoning']}
+ร้าน: {d.get('store', 'N/A')}
+ของที่ซื้อ: {', '.join(d.get('items_to_buy', []))}
+
+จากประสบการณ์นี้ สร้าง "ความทรงจำใหม่" สั้นๆ 1-2 ประโยค
+และให้คะแนนความสำคัญ 1-10
+
+ตอบเป็น JSON:
+{{ "new_memory": "ประโยคความทรงจำใหม่", "importance": 1-10 }}"""
+
+reflection = call_llm(reflect_prompt)
+  </code></pre>
+  <div class="fragment">
+    <pre><code class="python" style="font-size:0.5em;">
+# เพิ่มความทรงจำใหม่กลับเข้า Memory Stream!
+memory_stream.add(
+    content=reflection['new_memory'],
+    importance=reflection['importance'],
+    memory_type="reflection",             # ← ประเภท "reflection"
+    created_at=NOW + timedelta(hours=1),
+    related_store=d.get('store')
+)
+# ครั้งหน้าที่ตัดสินใจ → memory นี้จะถูกดึงมาใช้!
+    </code></pre>
+  </div>
+  <div class="fragment code-note">
+    <strong style="color:#c49bff;">REFLECT สำคัญมาก:</strong>
+    Claude สรุปบทเรียนเป็น memory ใหม่ แล้ว <strong>ใส่กลับ</strong> Memory Stream<br>
+    ทำให้ agent "เรียนรู้" &mdash; ครั้งหน้า memory นี้จะถูก retrieve มาใช้ตัดสินใจ
+  </div>
+</section>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: Multi-Agent Simulation -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%)">
+  <div class="section-title">
+    <span class="section-num">05</span>
+    <h2>Multi-Agent Simulation</h2>
+    <p style="color:#aaa;">3 ลูกค้า สถานการณ์เดียวกัน ตัดสินใจต่างกัน</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%)">
+  <h3>3 Customer Profiles</h3>
+  <div class="two-col" style="gap:15px;">
+    <div class="profile-card" style="border-color:var(--accent);">
+      <h4 class="accent" style="margin:0 0 8px 0; font-size:0.95em;">สมศรี (แม่บ้าน, 45)</h4>
+      <p style="font-size:0.85em; margin:4px 0;">รายได้ 35,000 บาท | ครอบครัว 4 คน</p>
+      <p style="font-size:0.8em; margin:4px 0; color:#ccc;">
+        Price Sensitivity: <span class="accent3">8/10</span><br>
+        Promotion: <span class="accent3">9/10</span><br>
+        Convenience: <span class="accent2">4/10</span><br>
+        Impulse: <span class="accent4">3/10</span>
+      </p>
+      <p style="font-size:0.75em; color:#aaa; margin:4px 0;">ละเอียดเรื่องราคา ชอบดูใบปลิว</p>
+    </div>
+    <div class="profile-card" style="border-color:var(--accent2);">
+      <h4 class="accent2" style="margin:0 0 8px 0; font-size:0.95em;">สมชาย (โปรแกรมเมอร์, 32)</h4>
+      <p style="font-size:0.85em; margin:4px 0;">รายได้ 80,000 บาท | คอนโด คนเดียว</p>
+      <p style="font-size:0.8em; margin:4px 0; color:#ccc;">
+        Price Sensitivity: <span class="accent3">3/10</span><br>
+        Promotion: <span class="accent3">2/10</span><br>
+        Convenience: <span class="accent2">9/10</span><br>
+        Impulse: <span class="accent4">6/10</span>
+      </p>
+      <p style="font-size:0.75em; color:#aaa; margin:4px 0;">ไม่มีเวลา ซื้อ 7-Eleven ใต้คอนโด</p>
+    </div>
+    <div class="profile-card" style="border-color:var(--accent4);">
+      <h4 class="accent4" style="margin:0 0 8px 0; font-size:0.95em;">ลุงสมบัติ (เกษียณ, 62)</h4>
+      <p style="font-size:0.85em; margin:4px 0;">รายได้ 15,000 บาท | อยู่กับภรรยา</p>
+      <p style="font-size:0.8em; margin:4px 0; color:#ccc;">
+        Price Sensitivity: <span class="accent3">9.5/10</span><br>
+        Promotion: <span class="accent3">6/10</span><br>
+        Convenience: <span class="accent2">3/10</span><br>
+        Impulse: <span class="accent4">1/10</span>
+      </p>
+      <p style="font-size:0.75em; color:#aaa; margin:4px 0;">ภักดี CJ More ไปทุกสัปดาห์</p>
+    </div>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%)">
+  <h3>Memories เฉพาะของแต่ละ Agent</h3>
+  <p style="font-size:0.7em; color:#aaa;">แต่ละคนมีประสบการณ์ต่างกัน &rarr; ส่งผลต่อการตัดสินใจ</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; font-size:0.5em; text-align:left; margin-top:10px;">
+    <div style="background:rgba(233,69,96,0.1); border:1px solid rgba(233,69,96,0.3); border-radius:8px; padding:12px;">
+      <h4 class="accent" style="margin:0 0 8px 0;">สมศรี</h4>
+      <p style="margin:3px 0; color:#ccc;">"เห็นโปรลดนม 30% ที่ Big C" <span style="color:#888;">(imp=7)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"Big C คนเยอะ แต่โปรดี" <span style="color:#888;">(imp=6)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"ซื้อนม Big C ประหยัดเยอะ" <span style="color:#888;">(imp=7)</span></p>
+      <p style="margin:6px 0 0; color:#e94560;">→ จำ Big C + โปร</p>
+    </div>
+    <div style="background:rgba(83,216,251,0.1); border:1px solid rgba(83,216,251,0.3); border-radius:8px; padding:12px;">
+      <h4 class="accent2" style="margin:0 0 8px 0;">สมชาย</h4>
+      <p style="margin:3px 0; color:#ccc;">"7-Eleven ใต้คอนโด สะดวก" <span style="color:#888;">(imp=6)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"Big C รถติด 2 ชม. ไม่คุ้ม" <span style="color:#888;">(imp=8)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"7-Eleven แพงนิดแต่สะดวก" <span style="color:#888;">(imp=5)</span></p>
+      <p style="margin:6px 0 0; color:#53d8fb;">→ จำ 7-Eleven + สะดวก</p>
+    </div>
+    <div style="background:rgba(168,230,207,0.1); border:1px solid rgba(168,230,207,0.3); border-radius:8px; padding:12px;">
+      <h4 class="accent4" style="margin:0 0 8px 0;">ลุงสมบัติ</h4>
+      <p style="margin:3px 0; color:#ccc;">"CJ More พนักงานจำชื่อได้" <span style="color:#888;">(imp=7)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"CJ More ไข่ลด 20%" <span style="color:#888;">(imp=6)</span></p>
+      <p style="margin:3px 0; color:#ccc;">"Big C ไกล ไม่คุ้มน้ำมัน" <span style="color:#888;">(imp=5)</span></p>
+      <p style="margin:6px 0 0; color:#a8e6cf;">→ จำ CJ More + ร้านประจำ</p>
+    </div>
+  </div>
+  <div class="code-note" style="margin-top:12px; font-size:0.7em;">
+    <strong class="accent3">Key Insight:</strong> Memory ต่างกัน → LLM ตัดสินใจต่างกัน แม้สถานการณ์เดียวกัน
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%)">
+  <h3>Simulation Loop</h3>
+  <pre><code class="python" style="font-size:0.45em;">
+sim_results = []
+
+for customer in CUSTOMERS:
+    name = customer['name']
+
+    # สร้าง memory stream เฉพาะของแต่ละ agent
+    ms = MemoryStream(agent_name=name)
+    for content, imp, hours_ago in AGENT_MEMORIES.get(name, []):
+        ms.add(content, imp, "observation", NOW - timedelta(hours=hours_ago))
+    ms.add("ของในบ้านเหลือน้อย ต้องไปซื้อ", 7, "plan", NOW - timedelta(hours=1))
+
+    # RETRIEVE
+    mem_text = ms.format_for_prompt(
+        ms.retrieve("ซื้อของ ร้าน นม ไข่", top_k=5, current_time=NOW)
+    )
+
+    # PLAN — Claude ตัดสินใจ!
+    agent_prompt = build_prompt(customer, perception, mem_text)
+    agent_plan = call_llm(agent_prompt)
+
+    ad = agent_plan['decision']
+    sim_results.append({
+        "name": name,
+        "store": ad.get('store', 'N/A'),
+        "spend": ad.get('estimated_spend', 0),
+        "items": ad.get('items_to_buy', []),
+        "reasoning": ad['reasoning']
+    })
+  </code></pre>
+  <div class="fragment code-note">
+    <strong class="accent3">Loop เดียวกัน 3 รอบ</strong> &mdash; แต่ผลลัพธ์ต่างกัน!<br>
+    เพราะ <strong>personality + memories</strong> ของแต่ละคนต่างกัน<br>
+    Claude "เล่นเป็น" ตัวละครแต่ละคน ตัดสินใจตามนิสัยที่กำหนด
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #1a3c40 0%, #2d6a4f 100%)">
+  <h3>ผลลัพธ์ที่คาดหวัง</h3>
+  <table class="compare-table" style="margin-top:15px;">
+    <thead>
+      <tr><th>Agent</th><th>ร้านที่เลือก</th><th>เหตุผลหลัก</th></tr>
+    </thead>
+    <tbody>
+      <tr class="fragment">
+        <td class="accent">สมศรี</td>
+        <td>Big C</td>
+        <td>โปรลดนม 30% คุ้มมาก + ชอบดูโปร (promotion = 9/10)</td>
+      </tr>
+      <tr class="fragment">
+        <td class="accent2">สมชาย</td>
+        <td>7-Eleven / CJ More</td>
+        <td>สะดวก ไม่เสียเวลา (convenience = 9/10)</td>
+      </tr>
+      <tr class="fragment">
+        <td class="accent4">ลุงสมบัติ</td>
+        <td>CJ More</td>
+        <td>ร้านประจำ ใกล้บ้าน ภักดี (brand_loyalty = 8/10)</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="fragment" style="margin-top:20px;">
+    <div class="highlight-box">
+      <strong class="accent">สถานการณ์เดียวกัน ของที่ต้องซื้อเหมือนกัน</strong><br>
+      แต่ personality + memories ต่างกัน &rarr; ตัดสินใจต่างกัน!<br>
+      นี่คือพลังของ <span class="accent2">Generative Agents</span> &mdash; ไม่ต้องเขียน if-else เลย
+    </div>
+  </div>
+</section>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: Key Takeaways -->
+<!-- ============================================================ -->
+<section>
+
+<section data-background-gradient="linear-gradient(135deg, #2d132c 0%, #5c2d5e 100%)">
+  <div class="section-title">
+    <span class="section-num">06</span>
+    <h2>Key Takeaways</h2>
+    <p style="color:#aaa;">สรุปสิ่งที่ได้เรียนรู้</p>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #2d132c 0%, #5c2d5e 100%)">
+  <h3>Patterns ที่สำคัญ</h3>
+  <div style="font-size:0.82em;">
+    <div class="fragment">
+      <h4 class="accent2" style="margin-bottom:5px;">1. Memory Stream เป็นศูนย์กลาง</h4>
+      <p style="margin-left:20px;color:#ccc;">เก็บทุกประสบการณ์ ค้นหาด้วย <code>recency x importance x relevance</code></p>
+    </div>
+    <div class="fragment">
+      <h4 class="accent3" style="margin-bottom:5px;">2. LLM ใช้แค่ 2 จุด: PLAN + REFLECT</h4>
+      <p style="margin-left:20px;color:#ccc;">ที่เหลือเป็น Python ธรรมดา &mdash; ประหยัด API cost</p>
+    </div>
+    <div class="fragment">
+      <h4 class="accent4" style="margin-bottom:5px;">3. Personality อยู่ใน Prompt ไม่ใช่ในโค้ด</h4>
+      <p style="margin-left:20px;color:#ccc;">เปลี่ยนนิสัยแค่เปลี่ยนตัวเลข &mdash; ไม่ต้องเขียน if-else ใหม่</p>
+    </div>
+    <div class="fragment">
+      <h4 class="accent" style="margin-bottom:5px;">4. REFLECT สร้างการเรียนรู้</h4>
+      <p style="margin-left:20px;color:#ccc;">Memory ใหม่จาก reflection ถูกใส่กลับ &rarr; ส่งผลต่อการตัดสินใจครั้งถัดไป</p>
+    </div>
+  </div>
+</section>
+
+<section data-background-gradient="linear-gradient(135deg, #2d132c 0%, #5c2d5e 100%)">
+  <h3>ทำไม LLM ดีกว่า if-else?</h3>
+  <table class="compare-table" style="margin-top:15px;">
+    <thead>
+      <tr>
+        <th style="width:30%;">มิติ</th>
+        <th style="width:35%;">if-else (Rule-based)</th>
+        <th style="width:35%;">LLM (Generative Agent)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="fragment">
+        <td>เปลี่ยน personality</td>
+        <td>เขียน if-else ใหม่ทั้งหมด</td>
+        <td class="accent4">แก้ตัวเลขใน prompt</td>
+      </tr>
+      <tr class="fragment">
+        <td>เพิ่มร้านค้าใหม่</td>
+        <td>เพิ่ม branch ในโค้ด</td>
+        <td class="accent4">เพิ่มใน STORES list</td>
+      </tr>
+      <tr class="fragment">
+        <td>ความสมจริง</td>
+        <td>ทำซ้ำเหมือนเดิมทุกครั้ง</td>
+        <td class="accent4">คิดจากบริบท ตอบต่างกันได้</td>
+      </tr>
+      <tr class="fragment">
+        <td>การเรียนรู้</td>
+        <td>ไม่เรียนรู้</td>
+        <td class="accent4">REFLECT สร้าง memory ใหม่</td>
+      </tr>
+      <tr class="fragment">
+        <td>Scalability</td>
+        <td>เพิ่ม agent = เพิ่ม code</td>
+        <td class="accent4">เพิ่มแค่ profile dict</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="fragment highlight-box" style="margin-top:20px;">
+    <strong class="accent">Bottom line:</strong> LLM ทำให้สร้าง agent ใหม่ได้ง่าย<br>
+    แค่กำหนด personality + memories &mdash; ไม่ต้องเขียนกฎตัดสินใจเลย
+  </div>
+</section>
+
+</section>
+
+</div><!-- slides -->
+</div><!-- reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/notes/notes.js"></script>
+
+<script>
+// Initialize Reveal.js
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  showSlideNumber: 'all',
+  transition: 'slide',
+  transitionSpeed: 'default',
+  backgroundTransition: 'fade',
+  pdfSeparateFragments: false,
+  plugins: [RevealHighlight, RevealNotes],
+  width: 1200,
+  height: 700,
+  margin: 0.04,
+  minScale: 0.2,
+  maxScale: 2.0
+});
+</script>
+
+</body>
+</html>
